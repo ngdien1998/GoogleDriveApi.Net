@@ -1,0 +1,50 @@
+﻿@model IEnumerable<GoogleDriveFileEntity>
+@{
+    ViewData["Title"] = "Google Drive API";
+}
+
+<div class="container">
+    <h1>CHƯƠNG TRÌNH UPLOAD FILE LÊN GOOGLE DRIVE <br> <b>SỬ DỤNG GOOGLE DRIVE API</b></h1>
+
+    <form asp-controller="Home" asp-action="Upload" method="post" enctype="multipart/form-data" class="form-main">
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <input class="btn btn-primary" type="submit" value="Upload" />
+            </div>
+            <div class="custom-file">
+                <input type="file" name="file" class="custom-file-input" id="file" />
+                <label class="custom-file-label" id="file-name">Choose file</label>
+            </div>
+        </div>
+    </form>
+
+    <table class="table table-bordered">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Name)</th>
+            <th>@Html.DisplayNameFor(model => model.Size)</th>
+            <th>@Html.DisplayNameFor(model => model.Version)</th>
+            <th>@Html.DisplayNameFor(model => model.CreatedTime)</th>
+            <th>Download</th>
+            <th>Delete</th>
+        </tr>
+        @foreach (var file in Model)
+        {
+            <tr>
+                <td>@file.Name</td>
+                <td>@file.Size byte</td>
+                <td align="center">@file.Version</td>
+                <td>@file.CreatedTime</td>
+                <td align="center"><a href="Download/@file.Id">Download</a></td>
+                <td align="center"><a href="Delete/@file.Id" class="download">Delete</a></td>
+            </tr>
+        }
+    </table>
+</div>
+
+@section Scripts {
+    <script src="~/js/home.js"></script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/home.css" />
+}
