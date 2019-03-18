@@ -12,23 +12,26 @@ using System.Threading.Tasks;
 
 namespace GoogleDriveApi.Models.BusinessModels
 {
+    /// <summary>
+    /// Manages file in google drive
+    /// </summary>
     public static class GoogleDriveFilesRepositoryService
     {
         private static readonly string[] scopes = { DriveService.Scope.DriveFile };
-        private static readonly string applicationName = "Drive API API Version 3";
+        private static readonly string applicationName = "Nhom 2";
 
         /// <summary>
-        /// 
+        /// Get instance of Google.Apis.Drive.v3.DriveService after configuring user authentication
         /// </summary>
         private static DriveService GetGoogleDriveService()
         {
             UserCredential credential;
 
-            using (FileStream stream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
             {
                 // The file token.json stores the user's access and refresh tokens, and is created
                 // automatically when the authorization flow completes for the first time.
-                string credPath = "token.json";
+                string credPath = "SavedToken";
                 credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
                     GoogleClientSecrets.Load(stream).Secrets,
                     scopes,
@@ -46,17 +49,20 @@ namespace GoogleDriveApi.Models.BusinessModels
         }
 
         /// <summary>
-        /// 
+        /// Get google drive files
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of google drive files</returns>
         public static IEnumerable<GoogleDriveFileEntity> GetGoogleDriveFiles()
         {
+            IList<Google.Apis.Drive.v3.Data.File> files = null;
+
             // Define parameters of request
             FilesResource.ListRequest listRequest = GetGoogleDriveService().Files.List();
             listRequest.Fields = "nextPageToken, files(id, name, size, version, createdTime)";
 
             // List files
-            IList<Google.Apis.Drive.v3.Data.File> files = listRequest.Execute().Files;
+            files = listRequest.Execute().Files;
+
             if (files != null && files.Count > 0)
             {
                 foreach (var file in files)
@@ -74,10 +80,9 @@ namespace GoogleDriveApi.Models.BusinessModels
         }
 
         /// <summary>
-        /// 
+        /// Upload file to google drive
         /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="filePath"></param>
+        /// <param name="filePath">Upload file path in server</param>
         public static void UploadFile(string filePath)
         {
             var fileMetaData = new Google.Apis.Drive.v3.Data.File
@@ -86,20 +91,21 @@ namespace GoogleDriveApi.Models.BusinessModels
                 MimeType = MimeTypes.GetMimeType(filePath)
             };
 
-            using (FileStream stream = new FileStream(filePath, FileMode.Open))
+            using (var stream = new FileStream(filePath, FileMode.Open))
             {
-                FilesResource.CreateMediaUpload request = GetGoogleDriveService().Files.Create(fileMetaData, stream, fileMetaData.MimeType);
+                var request = GetGoogleDriveService().Files.Create(fileMetaData, stream, fileMetaData.MimeType);
                 request.Fields = "id";
                 request.Upload();
             }
+            File.Delete(filePath);
         }
 
         /// <summary>
-        /// 
+        /// Download file from google drive
         /// </summary>
-        /// <param name="fileId"></param>
-        /// <returns></returns>
-        public static async Task<string> DownloadFile(string fileId)
+        /// <param name="fileId">Downloaded file ID</param>
+        /// <returns>Server file path in server</returns>
+        public static async Task<string> DownloadFileAsync(string fileId)
         {
             FilesResource.GetRequest request = GetGoogleDriveService().Files.Get(fileId);
 
@@ -112,11 +118,10 @@ namespace GoogleDriveApi.Models.BusinessModels
             {
                 switch (progress.Status)
                 {
-                    case DownloadStatus.Downloading:
-                        break;
                     case DownloadStatus.Completed:
                         SaveFile(stream, filePath);
                         break;
+                    case DownloadStatus.Downloading:
                     case DownloadStatus.Failed:
                         break;
                 }
@@ -126,11 +131,20 @@ namespace GoogleDriveApi.Models.BusinessModels
             return filePath;
         }
 
+        /// <summary>
+        /// Delete file from google drive
+        /// </summary>
+        /// <param name="fileId">Google drive file ID</param>
         public static void DeleteFile(string fileId)
         {
             GetGoogleDriveService().Files.Delete(fileId).Execute();
         }
 
+        /// <summary>
+        /// Save file to server
+        /// </summary>
+        /// <param name="stream">Memory stream containing file</param>
+        /// <param name="filePath">File path in server</param>
         private static void SaveFile(MemoryStream stream, string filePath)
         {
             using (FileStream fstream = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite))

@@ -36,10 +36,11 @@ namespace GoogleDriveApi.Controllers
         [HttpGet("Download/{id}")]
         public async Task<IActionResult> DownloadAsync([FromRoute(Name = "id")] string fileId)
         {
-            string filePath = await GoogleDriveFilesRepositoryService.DownloadFile(fileId);
+            string filePath = await GoogleDriveFilesRepositoryService.DownloadFileAsync(fileId);
             string fileName = Path.GetFileName(filePath);
 
             byte[] buffer = System.IO.File.ReadAllBytes(filePath);
+            System.IO.File.Delete(filePath);
             return File(buffer, "application/force-download", fileName);
         }
 
